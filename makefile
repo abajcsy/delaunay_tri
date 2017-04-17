@@ -2,18 +2,19 @@
 
 CC=gcc
 CXX=g++
+CFLAGS=-g -Wall
 
-quadtest: quadedge.o
-	$(CXX) quadedge.o -o quadtest 
+delaunay: delaunay.o edge.o predicates.o
+	$(CXX) $(CFLAGS) -o delaunay quadedge.o  
 
-quadedge.o: quadedge.cpp predicates.h edge.h
-	$(CXX) quadedge.cpp edge.cpp -o quadedge.o 
+delaunay.o: delaunay.cpp predicates.h edge.h
+	$(CXX) $(CFLAGS) -c delaunay.cpp 
 
-edge.o: edge.cpp
-	$(CXX) edge.cpp -o edge.o 
+edge.o: edge.cpp edge.h
+	$(CXX) $(CFLAGS) -c edge.cpp 
 
 predicates.o: predicates.c
-	$(CC) -c predicates.c -o predicates.o 
+	$(CC) $(CFLAGS) -c predicates.c -o predicates.o 
 
 clean: 
-	rm *.o quadtest
+	rm *.o delaunay
