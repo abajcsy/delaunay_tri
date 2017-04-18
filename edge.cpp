@@ -1,6 +1,5 @@
 // QuadEdge class
 
-#include <iostream>
 #include "edge.h"
 #include "quadedge.h"
 
@@ -76,26 +75,28 @@ Edge* Edge::rprev(){
 }
 
 /* Returns the origin of this edge */
-double* Edge::getOrigin(){
+vector<double> Edge::getOrigin(){
 	return origin;
 }
 
 /* Returns destination of this edge */
 // TODO IS THIS RIGHT OR SHOULD BE sym->origin ?
-double* Edge::getDest(){
+vector<double> Edge::getDest(){
 	return dest;
 }
 
-void Edge::setOrigin(double *pt){
-	origin = pt;
+void Edge::setOrigin(vector<double> pt){
+	origin[0] = pt[0];
+	origin[1] = pt[1];
 }
 
-void Edge::setDest(double* pt){
-	dest = pt;
+void Edge::setDest(vector<double> pt){
+	dest[0] = pt[0];
+	dest[1] = pt[1];
 }
 
 /* Returns empty new edge */
-static Edge* makeEdge(){
+Edge* Edge::makeEdge(){
 	return (new QuadEdge())->e;
 }
 
@@ -105,7 +106,7 @@ static Edge* makeEdge(){
 	- if aOrg and bOrg are same ring with opposite orientations, flip (and
 	  reverse the order) of a segment of that ring.  
  */
-static void splice(Edge *a, Edge *b){
+void Edge::splice(Edge *a, Edge *b){
 	// sanity check
 	if(a == NULL || b == NULL){
 		cout << "Error: splice() has null parameters." << endl;
@@ -131,7 +132,7 @@ static void splice(Edge *a, Edge *b){
 /* Adds new edge e connecting the dest of a to the origin of b so that
  * aLeft = eLeft = bLeft, and sets e.origin = a.dest and e.dest = b.origin
  */
-static Edge* connect(Edge *a, Edge *b){
+Edge* Edge::connect(Edge *a, Edge *b){
 	Edge *e = makeEdge();
 	e->setOrigin(a->getDest()); //TODO CHECK ALIASING HERE
 	splice(e, a->lnext());
@@ -140,7 +141,7 @@ static Edge* connect(Edge *a, Edge *b){
 }
 
 /* Disconnects edge e from the rest of the structure */
-static void deleteEdge(Edge *e){
+void Edge::deleteEdge(Edge *e){
 	splice(e, e->oprev());
 	splice(e->sym(), e->sym()->oprev());
 }
