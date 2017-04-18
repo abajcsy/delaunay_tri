@@ -1,14 +1,12 @@
 #ifndef EDGE_H_
 #define EDGE_H_
 
-class QuadEdge;
-
 class Edge {
 	public:
 		int idx;				// index of edge in quadedge data struct
 		Edge *next;				// holds reference to onext edge
-		double origin[2]; 		// holds (x,y) coord of origin vertex
- 		double dest[2]; 		// holds (x,y) coord of destination vertex
+		double* origin; 		// holds (x,y) coord of origin vertex
+ 		double* dest; 		// holds (x,y) coord of destination vertex
 
 		Edge* rot();			// returns dual edge (right --> left)
 		Edge* invrot();			// returns dual edge (left --> right)
@@ -23,8 +21,10 @@ class Edge {
 		Edge* rprev();			// returns CCW edge around right face before edge
 		//Face* left();
 		//Face* right();
-		double* origin();		// returns origin vertex of this edge 
-		double* dest();			// returns destination vertex of this edge
+		double* getOrigin();		// returns origin vertex of this edge 
+		double* getDest();			// returns destination vertex of this edge
+		void setOrigin(double *pt);			// sets origin of edge
+		void setDest(double *pt);				// sets dest of edge
 
 		/* creates a new edge that is disconnected */
 		static Edge* makeEdge();

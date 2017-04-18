@@ -1,30 +1,10 @@
-// Edge class
+// QuadEdge class
 
 #include <iostream>
 #include "edge.h"
+#include "quadedge.h"
 
 using namespace std;
-
-//*************** QuadEdge Structure ****************//
-class QuadEdge{
-	public:
-		Edge e[4];	// four edge records containing data and next fields
-
-	public: 
-		QuadEdge::QuadEdge(){
-			// assign indicies for each edge in quadedge
-			this->e[0].idx = 0;
-			this->e[1].idx = 1;
-			this->e[2].idx = 2;
-			this->e[3].idx = 3;
-	
-			// set up next CCW edge pointers (around origin) for all edges
-			this->e[0].next = &(e[0]);
-			this->e[1].next = &(e[3]);
-			this->e[2].next = &(e[2]);
-			this->e[3].next = &(e[1]);
-		}
-};
 
 //*************** Edge Functions ****************//
 
@@ -96,14 +76,22 @@ Edge* Edge::rprev(){
 }
 
 /* Returns the origin of this edge */
-double* origin(){
+double* Edge::getOrigin(){
 	return origin;
 }
 
 /* Returns destination of this edge */
 // TODO IS THIS RIGHT OR SHOULD BE sym->origin ?
-double* dest(){
+double* Edge::getDest(){
 	return dest;
+}
+
+void Edge::setOrigin(double *pt){
+	origin = pt;
+}
+
+void Edge::setDest(double* pt){
+	dest = pt;
 }
 
 /* Returns empty new edge */
@@ -145,7 +133,7 @@ static void splice(Edge *a, Edge *b){
  */
 static Edge* connect(Edge *a, Edge *b){
 	Edge *e = makeEdge();
-	e->origin = a->dest();
+	e->setOrigin(a->getDest()); //TODO CHECK ALIASING HERE
 	splice(e, a->lnext());
 	splice(e->sym(), b);
 	return e;
@@ -153,7 +141,7 @@ static Edge* connect(Edge *a, Edge *b){
 
 /* Disconnects edge e from the rest of the structure */
 static void deleteEdge(Edge *e){
-	splice(e, e.oprev());
+	splice(e, e->oprev());
 	splice(e->sym(), e->sym()->oprev());
 }
 
