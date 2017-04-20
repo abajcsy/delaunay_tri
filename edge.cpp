@@ -7,6 +7,11 @@ using namespace std;
 
 //*************** Edge Functions ****************//
 
+Edge::Edge(){
+	origin = new Vertex();
+	dest = new Vertex();
+}
+
 /* Returns dual edge (right --> left): (e,r) rot = (e, r+1) */
 Edge* Edge::rot(){
 	if (idx >= 3) {
@@ -75,24 +80,42 @@ Edge* Edge::rprev(){
 }
 
 /* Returns the origin of this edge */
-vector<double> Edge::getOrigin(){
+Vertex* Edge::getOrigin(){
 	return origin;
 }
 
 /* Returns destination of this edge */
-// TODO IS THIS RIGHT OR SHOULD BE sym->origin ?
-vector<double> Edge::getDest(){
+Vertex* Edge::getDest(){
 	return dest;
 }
 
-void Edge::setOrigin(vector<double> pt){
-	origin[0] = pt[0];
-	origin[1] = pt[1];
+void Edge::setOrigin(Vertex *pt){
+	origin = pt;
+	sym()->dest = pt;
 }
 
-void Edge::setDest(vector<double> pt){
-	dest[0] = pt[0];
-	dest[1] = pt[1];
+void Edge::setDest(Vertex *pt){
+	sym()->origin = pt;
+	dest = pt;
+}
+
+void Edge::print(){
+	cout << "Edge idx: " << idx << endl;
+	cout << "--> Origin [node# " << origin->getNodeNum() << "]: (" << origin->getPt()[0] << ", " << origin->getPt()[1] << ")\n";
+	cout << "--> Dest [node# " << dest->getNodeNum() << "]: (" << dest->getPt()[0] << ", " << dest->getPt()[1] << ")\n";	
+	/*if(!origin->getPt().empty() && !dest->getPt().empty()){
+		cout << "--> Origin: (" << origin->getPt()[0] << ", " << origin->getPt()[1] << ")\n";
+		cout << "--> Dest: (" << dest->getPt()[0] << ", " << dest->getPt()[1] << ")\n";	
+	}else if(!origin->getPt().empty() && dest->getPt().empty()){
+		cout << "--> Origin: (" << origin->getPt()[0] << ", " << origin->getPt()[1] << ")\n";
+		cout << "--> Dest: (---)\n";
+	}else if(origin->getPt().empty() && !dest->getPt().empty()){
+		cout << "--> Origin: (---)\n";
+		cout << "--> Dest: (" << dest->getPt()[0] << ", " << dest->getPt()[1] << ")\n";
+	}else{ //origin->getPt().empty() && dest->getPt().empty()
+		cout << "--> Origin: (---)\n";
+		cout << "--> Dest: (---)\n";	
+	}*/
 }
 
 /* Returns empty new edge */
@@ -135,6 +158,7 @@ void Edge::splice(Edge *a, Edge *b){
 Edge* Edge::connect(Edge *a, Edge *b){
 	Edge *e = makeEdge();
 	e->setOrigin(a->getDest()); //TODO CHECK ALIASING HERE
+	e->setDest(b->getOrigin());
 	splice(e, a->lnext());
 	splice(e->sym(), b);
 	return e;

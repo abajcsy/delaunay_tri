@@ -10,4 +10,5 @@ class QuadEdge{
 	public: 
 		QuadEdge();
 };
+
 #endif

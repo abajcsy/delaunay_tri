@@ -3,15 +3,18 @@
 
 #include <iostream>
 #include <vector>
+#include "vertex.h"
+
 using namespace std;
 
 class Edge {
 	public:
 		int idx;				// index of edge in quadedge data struct
 		Edge *next;				// holds reference to onext edge
-		vector<double> origin; 		// holds (x,y) coord of origin vertex
- 		vector<double> dest; 		// holds (x,y) coord of destination vertex
+		Vertex *origin;			// holds ID and (x,y) coord of origin vertex
+		Vertex *dest;			// holds ID and (x,y) coord of dest vertex
 
+		Edge();
 		Edge* rot();			// returns dual edge (right --> left)
 		Edge* invrot();			// returns dual edge (left --> right)
 		Edge* sym();			// returns edge from dest --> origin
@@ -23,10 +26,10 @@ class Edge {
 		Edge* lprev();			// returns CCW edge around left face before edge
 		Edge* rnext();			// returns CCW edge around right face following edge
 		Edge* rprev();			// returns CCW edge around right face before edge
-		vector<double> getOrigin();		// returns origin vertex of this edge 
-		vector<double> getDest();			// returns destination vertex of this edge
-		void setOrigin(vector<double> pt);			// sets origin of edge
-		void setDest(vector<double> pt);			// sets dest of edge
+		Vertex* getOrigin();		// returns origin vertex of this edge 
+		Vertex* getDest();			// returns destination vertex of this edge
+		void setOrigin(Vertex* pt);			// sets origin of edge
+		void setDest(Vertex* pt);			// sets dest of edge
 
 		/* creates a new edge that is disconnected */
 		static Edge* makeEdge();
@@ -36,6 +39,8 @@ class Edge {
 		static Edge* connect(Edge *a, Edge *b);
 		/* disconnects edge e from the rest of the structure */
 		static void deleteEdge(Edge *e);
+
+		void print();
 };
 
 #endif
