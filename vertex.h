@@ -14,13 +14,14 @@ class Vertex {
 	
 	public:
 		Vertex();
-		//Vertex(double x, double y, int nodeNum);
 		void setPt(vector<double> newPt);
 		void setPtX(double x);
 		void setPtY(double y);
 		void setNodeNum(int num);
 		vector<double> getPt();
 		int getNodeNum();
+
+		static bool equal(Vertex *v1, Vertex *v2);
 };
 
 #endif

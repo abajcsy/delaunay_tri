@@ -7,12 +7,6 @@ Vertex::Vertex(){
 	nodeNum = 0;
 }
 
-//Vertex::Vertex(double x, double y, int num){
-//	pt.push_back(x);
-//	pt.push_back(y);
-//	nodeNum = num;
-//}
-
 void Vertex::setPt(vector<double> newPt){
 	pt = newPt;
 }
@@ -25,7 +19,6 @@ void Vertex::setPtY(double y){
 	pt[1] = y;
 }
 
-
 void Vertex::setNodeNum(int num){
 	nodeNum = num;
 }
@@ -36,4 +29,8 @@ vector<double> Vertex::getPt(){
 
 int Vertex::getNodeNum(){
 	return nodeNum;
+}
+
+bool Vertex::equal(Vertex *v1, Vertex *v2){
+	return (v1->pt[0] == v2->pt[0] && v1->pt[1] == v2->pt[1]);
 }
