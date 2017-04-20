@@ -29,7 +29,9 @@ bool lex_compare(Vertex *v1, Vertex *v2) {
 /* Helper function to convert to proper data types for predicates.h
  */
 static double* vertexToDoubleArr(Vertex *v){
-	double p[2] = {v->getPt()[0], v->getPt()[1]};
+	double *p = (double*)malloc(2*sizeof(double));
+	p[1] = v->getPt()[0];
+	p[2] = v->getPt()[1];
 	return p;
 }
 
@@ -86,7 +88,7 @@ static void writeEle(string filename, vector< vector<Vertex*> > triList){
 	if (myfile.is_open()) {
 		myfile << triList.size() << " 3 0\n";
 		for(int i = 0; i < triList.size(); i++){
-			myfile << (i+1) << " " << triList[i][0]->getNodeNum() << " " << triList[i][1]->getNodeNum() << " " << triList[i][2]->getNodeNum();
+			myfile << (i+1) << " " << triList[i][0]->getNodeNum() << " " << triList[i][1]->getNodeNum() << " " << triList[i][2]->getNodeNum() << endl;
 		}
 		myfile.close();
 	}
@@ -97,30 +99,31 @@ static void writeEle(string filename, vector< vector<Vertex*> > triList){
  */
 static vector< vector<Vertex*> > printTriangles(vector<Edge*> triangles){
 	//TODO THIS ONLY WORKS FOR ONE TRIANGLE RIGHT NOW
-
 	// list of all triangle vertices
 	vector< vector<Vertex*> > triList;
-	// list of 3 vertices that make up one triangle
-	vector<Vertex*> tri;
 
 	cout << "------- PRINTING TRIANGULATION -------\n";
-	Edge *e = triangles[1];
-	cout << "Triangle 1: \n";
-	cout << "-- V" << e->getOrigin()->getNodeNum() << ": (" << e->getOrigin()->getPt()[0] << ", " << e->getOrigin()->getPt()[1] << ")\n";
-	// store current vertex for first triangle
-	tri.push_back(e->getOrigin());
-	Edge *curr_e = e->lnext();
-	int i = 2;
-	while(curr_e != NULL && curr_e != e){
-		cout << "-- V" << curr_e->getOrigin()->getNodeNum() << ": (" << curr_e->getOrigin()->getPt()[0] << ", " << curr_e->getOrigin()->getPt()[1] << ")\n";
-		tri.push_back(curr_e->getOrigin());
-		curr_e = curr_e->lnext();
-		i += 1;
-	}	
+	for(int idx = 0; idx < triangles.size(); idx++){
+		// list of 3 vertices that make up one triangle
+		vector<Vertex*> tri;
 
-	// save list of vertices to list
-	triList.push_back(tri);
+		Edge *e = triangles[idx];
+		cout << "Triangle " << idx << ":\n";
+		cout << "-- V" << e->getOrigin()->getNodeNum() << ": (" << e->getOrigin()->getPt()[0] << ", " << e->getOrigin()->getPt()[1] << ")\n";
+		// store current vertex for first triangle
+		tri.push_back(e->getOrigin());
+		Edge *curr_e = e->lnext();
+		int i = 2;
+		while(curr_e != NULL && curr_e != e){
+			cout << "-- V" << curr_e->getOrigin()->getNodeNum() << ": (" << curr_e->getOrigin()->getPt()[0] << ", " << curr_e->getOrigin()->getPt()[1] << ")\n";
+			tri.push_back(curr_e->getOrigin());
+			curr_e = curr_e->lnext();
+			i += 1;
+		}	
 
+		// save list of vertices to list
+		triList.push_back(tri);
+	}
 	cout << "--------------------------------------\n";
 	return triList;
 }
@@ -128,32 +131,37 @@ static vector< vector<Vertex*> > printTriangles(vector<Edge*> triangles){
 /* Tests if point X is to the right of a given edge e.
  */
 static double rightOf(Vertex *X, Edge *e){
-	double *p1 = vertexToDoubleArr(X); 				//{X->pt[0], X->pt[1]};
-	double *p2 = vertexToDoubleArr(e->getDest()); 	//{e->getDest()->pt[0], e->getDest()->pt[1]};
-	double *p3 = vertexToDoubleArr(e->getOrigin()); //{e->getOrigin()->pt[0], e->getOrigin()->pt[1]};
+	double *p1 = vertexToDoubleArr(X); 				
+	double *p2 = vertexToDoubleArr(e->getDest()); 	
+	double *p3 = vertexToDoubleArr(e->getOrigin()); 
 	return orient2d(p1,p2,p3);
 }
 
 /* Tests if point X is to the left of a given edge e.
  */
 static double leftOf(Vertex *X, Edge *e){
-	double *p1 = vertexToDoubleArr(X); 				//{X->pt[0], X->pt[1]};
-	double *p2 = vertexToDoubleArr(e->getDest()); 	//{e->getDest()->pt[0], e->getDest()->pt[1]};
-	double *p3 = vertexToDoubleArr(e->getOrigin()); //{e->getOrigin()->pt[0], e->getOrigin()->pt[1]};
+	double *p1 = vertexToDoubleArr(X); 				
+	double *p2 = vertexToDoubleArr(e->getDest()); 	
+	double *p3 = vertexToDoubleArr(e->getOrigin()); 
 	return orient2d(p1,p3,p2);
 }
 
-/* Tests whether the edge e is above basel
+/* Tests whether the edge e is above basel.
  */
 static double valid(Edge *e, Edge *basel){
 	return rightOf(e->getDest(), basel);
 }
 
+static vector<Edge*> altCutDT(vector<Vertex*> S){
+	//TODO IMPLEMENT THIS
+	vector<Edge*> ret;
+	return ret;
+}
 
 /* Constructs delaunay triangulation with the divide and conquer algorithm
  * Reference: Gubias and Stolfi.
  */
-static vector<Edge*> delaunay(vector<Vertex*> S){
+static vector<Edge*> divideConquerDT(vector<Vertex*> S){
 	vector<Edge*> ret;
 	if(S.size() == 2){
 		cout << "Case: |S| = 2" << endl;
@@ -180,15 +188,15 @@ static vector<Edge*> delaunay(vector<Vertex*> S){
 		a->setDest(S[1]);
 		b->setOrigin(S[1]);
 		b->setDest(S[2]);
-		double *p1 = vertexToDoubleArr(S[0]); //{S[0]->pt[0], S[0]->pt[1]};
-		double *p2 = vertexToDoubleArr(S[1]); //{S[1]->pt[0], S[1]->pt[1]};
-		double *p3 = vertexToDoubleArr(S[2]); //{S[2]->pt[0], S[2]->pt[1]};
 
 		cout << "NEW a:\n";
 		a->print();
 		cout << "NEW b:\n";
 		b->print();
 
+		double *p1 = vertexToDoubleArr(S[0]); 
+		double *p2 = vertexToDoubleArr(S[1]); 
+		double *p3 = vertexToDoubleArr(S[2]); 
 		if(orient2d(p1,p2,p3) > 0){
 			cout << "Connecting b to a with c:\n";
 			Edge *c = Edge::connect(b,a);
@@ -217,8 +225,8 @@ static vector<Edge*> delaunay(vector<Vertex*> S){
 		// split points in half, L = left half of S, R = right half of S 
 		vector<Vertex*> L(S.begin(), S.begin() + S.size()/2),
                		    R(S.begin() + S.size()/2, S.end());
-		vector<Edge*> ldoldi = delaunay(L);
-		vector<Edge*> rdirdo = delaunay(R);
+		vector<Edge*> ldoldi = divideConquerDT(L);
+		vector<Edge*> rdirdo = divideConquerDT(R);
 		Edge *ldo = ldoldi[0]; 
 		Edge *ldi = ldoldi[1];
 		Edge *rdi = rdirdo[0]; 
@@ -265,10 +273,10 @@ static vector<Edge*> delaunay(vector<Vertex*> S){
 			cout << "lcand:\n";
 			lcand->print();
 			if(valid(lcand, basel)){
-				double *pa = vertexToDoubleArr(basel->getDest()); 		// {basel->getDest()->getPt()[0], basel->getDest()->getPt()[1]};
-				double *pb = vertexToDoubleArr(basel->getOrigin()); 		// {basel->getOrigin()->getPt()[0], basel->getOrigin()->getPt()[1]};
-				double *pc = vertexToDoubleArr(lcand->getDest()); 			// {lcand->getDest()->getPt()[0], lcand->getDest()->getPt()[1]};
-				double *pd = vertexToDoubleArr(lcand->onext()->getDest()); // {lcand->onext()->getDest()->getPt()[0], lcand->onext()->getDest()->getPt()[1]};
+				double *pa = vertexToDoubleArr(basel->getDest()); 	
+				double *pb = vertexToDoubleArr(basel->getOrigin()); 		
+				double *pc = vertexToDoubleArr(lcand->getDest()); 		
+				double *pd = vertexToDoubleArr(lcand->onext()->getDest()); 
 				while(incircle(pa, pb, pc, pd)){
 					Edge *t = lcand->onext();
 					Edge::deleteEdge(lcand);
@@ -280,10 +288,10 @@ static vector<Edge*> delaunay(vector<Vertex*> S){
 			rcand->print();
 			// symmetrically locate the first R point to be hit, delete R edges
 			if(valid(rcand, basel)){
-				double *pa = vertexToDoubleArr(basel->getDest()); 			// {basel->getDest()->getPt()[0], basel->getDest()->getPt()[1]};
-				double *pb = vertexToDoubleArr(basel->getOrigin()); 		// {basel->getOrigin()->getPt()[0], basel->getOrigin()->getPt()[1]};
-				double *pc = vertexToDoubleArr(rcand->getDest()); 			// {rcand->getDest()->getPt()[0], rcand->getDest()->getPt()[1]};
-				double *pd = vertexToDoubleArr(rcand->oprev()->getDest()); // {rcand->oprev()->getDest()->getPt()[0], rcand->oprev()->getDest()->getPt()[1]};
+				double *pa = vertexToDoubleArr(basel->getDest()); 			
+				double *pb = vertexToDoubleArr(basel->getOrigin()); 		
+				double *pc = vertexToDoubleArr(rcand->getDest()); 			
+				double *pd = vertexToDoubleArr(rcand->oprev()->getDest()); 
 				while(incircle(pa, pb, pc, pd)){
 					Edge *t = rcand->oprev();
 					Edge::deleteEdge(rcand);
@@ -298,10 +306,10 @@ static vector<Edge*> delaunay(vector<Vertex*> S){
 			// the next cross edge is to be connected to either lcand.Dest or 
 			// rcand.Dest. If both are valid then choose the appropriate one
 			// using the incircle test.
-			double *pa = vertexToDoubleArr(lcand->getDest()); 	// {lcand->getDest()->getPt()[0], lcand->getDest()->getPt()[1]};
-			double *pb = vertexToDoubleArr(lcand->getOrigin()); // {lcand->getOrigin()->getPt()[0], lcand->getOrigin()->getPt()[1]};
-			double *pc = vertexToDoubleArr(rcand->getOrigin()); // {rcand->getOrigin()->getPt()[0], rcand->getOrigin()->getPt()[1]};
-			double *pd = vertexToDoubleArr(rcand->getDest()); 	//{rcand->getDest()->getPt()[0], rcand->getDest()->getPt()[1]};
+			double *pa = vertexToDoubleArr(lcand->getDest()); 
+			double *pb = vertexToDoubleArr(lcand->getOrigin()); 
+			double *pc = vertexToDoubleArr(rcand->getOrigin()); 
+			double *pd = vertexToDoubleArr(rcand->getDest()); 	
 			if(!valid(lcand, basel) || (valid(rcand, basel) && incircle(pa, pb, pc, pd))){
 				// add cross edge basel from rcand.Dest to basel.Dest
 				cout << "adding cross edge basel from rcand.Dest to basel.Dest\n";
@@ -321,8 +329,8 @@ static vector<Edge*> delaunay(vector<Vertex*> S){
 
 int main (int argc, char* argv[]) {
 
-	if (argc < 2) {
-		cout << "Useage: ./program /data/filename.node" << endl;
+	if (argc < 3) {
+		cout << "Useage: <program> <.node file> <-d (for divide and conquer) or -a (for alternating cut)>" << endl;
 		return 1;	
 	}
 
@@ -346,11 +354,19 @@ int main (int argc, char* argv[]) {
 	}
 
 	// compute delaunay triangulation with standard diviclearde & conquer algorithm
-	vector<Edge*> triangles = delaunay(points);
-	//vector< vector<Vertex*> > triList = printTriangles(triangles);
+	vector<Edge*> triangles;
+	if (argv[2][0] == '-') {
+		if(argv[2][1] == 'd'){
+			triangles = divideConquerDT(points);
+		}else if(argv[2][1] == 'a'){
+			triangles = altCutDT(points);
+		}
+	}
+	
+	vector< vector<Vertex*> > triList = printTriangles(triangles);
 
 	//cout << "Writing triangles to file... \n";
-	//writeEle(argv[1], triList);
+	writeEle(argv[1], triList);
 	
 	return 0;
 }
