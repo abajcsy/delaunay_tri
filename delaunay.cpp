@@ -104,48 +104,21 @@ static void writeEle(string filename, vector< vector<int> > tris){
  */
 static vector< vector<int> > parseTriangles(vector<Vertex*> points){
 	// list of all triangle vertices
-	//vector< vector<Vertex*> > triList;
 	vector< vector<int> > list;
 
 	cout << "------- PRINTING TRIANGULATION -------\n";
-
-	/*for(int i =0; i < points.size(); i++){
-		vector<Vertex*> tri;
-		tri.push_back(points[i]);
-		cout << "----printing vertex " << points[i]->getNodeNum() << "----\n";
-		Edge *curr_e = points[i]->getEdge();
-		tri.push_back(curr_e->getDest());
-		curr_e->print();
-		Edge *e = curr_e->onext();
-		while(!Edge::equal(e, curr_e)){ 
-			e->print();
-			tri.push_back(e->getDest());
-			e = e->onext();
-		}
-		triList.push_back(tri);	
-	}
-
-	cout << "printing other thing...\n";*/
 
 	for(int i =0; i < points.size(); i++){
 		//v.push_back(points[i]->getNodeNum();
 		Edge *og_e = points[i]->getEdge();
 
-		Edge *curr_e = og_e->onext();
+		Edge *curr_e = og_e;
 		Edge *next_e = curr_e->onext();
 
-		while(!Edge::equal(curr_e, og_e)){
+		do{
 			Vertex *o = og_e->getOrigin();
 			Vertex *c = curr_e->getDest();
 			Vertex *n = next_e->getDest();
-
-			cout << "og origin: \n";
-			o->print();
-			cout << "curr_e origin: \n";
-			c->print();
-			cout << "next_e origin: \n";
-			n->print();
-			cout << endl;
 
 			double *p1 = vertexToDoubleArr(o); 
 			double *p2 = vertexToDoubleArr(c); 
@@ -163,7 +136,7 @@ static vector< vector<int> > parseTriangles(vector<Vertex*> points){
 			} 
 			curr_e = curr_e->onext();
 			next_e = curr_e->onext();
-		}
+		}while(!Edge::equal(curr_e, og_e));
 	}
 
 
@@ -184,7 +157,7 @@ static double rightOf(Vertex *X, Edge *e){
 	double *p1 = vertexToDoubleArr(X); 				
 	double *edest = vertexToDoubleArr(e->getDest()); 	
 	double *eorg = vertexToDoubleArr(e->getOrigin()); 
-	cout << "in rightOf(): orient2d = " << orient2d(p1,edest,eorg) << endl;
+	//cout << "in rightOf(): orient2d = " << orient2d(p1,edest,eorg) << endl;
 	return orient2d(p1,edest,eorg);
 }
 
@@ -194,7 +167,7 @@ static double leftOf(Vertex *X, Edge *e){
 	double *p1 = vertexToDoubleArr(X); 				
 	double *eorg = vertexToDoubleArr(e->getOrigin()); 	
 	double *edest = vertexToDoubleArr(e->getDest()); 
-	cout << "in leftOf(): orient2d = " << orient2d(p1,eorg,edest) << endl;
+	//cout << "in leftOf(): orient2d = " << orient2d(p1,eorg,edest) << endl;
 	return orient2d(p1,eorg,edest);
 }
 
@@ -280,21 +253,21 @@ static vector<Edge*> divideConquerDT(vector<Vertex*> S){
 		cout << "Got left and right triangulations" << endl;
 		// compute lower common tangent of L and R
 		while(true){
-			cout << "rdi:\n";
-			rdi->print();
-			cout << "ldi:\n";
-			ldi->print();
+			//cout << "rdi:\n";
+			//rdi->print();
+			//cout << "ldi:\n";
+			//ldi->print();
 			if(leftOf(rdi->getOrigin(), ldi) > 0){
-				cout << "rdi origin is leftof ldi\n";
+				//cout << "rdi origin is leftof ldi\n";
 				ldi = ldi->lnext();
 			}else if(rightOf(ldi->getOrigin(), rdi) > 0){
-				cout << "ldi origin is rightof rdi\n";
+				//cout << "ldi origin is rightof rdi\n";
 				rdi = rdi->rprev();
 			}else{
 				break;
 			}
 		}
-		cout << "ldo printed:\n";
+		/*cout << "ldo printed:\n";
 		ldo->print();
 		cout << "ldi printed:\n";
 		ldi->print();
@@ -303,7 +276,7 @@ static vector<Edge*> divideConquerDT(vector<Vertex*> S){
 		cout << "rdi->sym() printed:\n";
 		rdi->sym()->print();
 		cout << "rdo printed:\n";
-		rdo->print();
+		rdo->print();*/
 		// create first cross edge base1 from rdi.Org to ldi.Org
 		Edge *basel = Edge::connect(rdi->sym(), ldi); 
 		cout << "basel connected:\n";
