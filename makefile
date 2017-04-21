@@ -16,7 +16,7 @@ quadedge.o: quadedge.cpp quadedge.h edge.h
 edge.o: edge.cpp edge.h quadedge.h vertex.h
 	$(CXX) $(CFLAGS) -c edge.cpp -o edge.o 
 
-vertex.o: vertex.cpp vertex.h
+vertex.o: vertex.cpp vertex.h edge.h
 	$(CXX) $(CFLAGS) -c vertex.cpp -o vertex.o
 
 predicates.o: predicates.c

@@ -1,9 +1,8 @@
 #ifndef EDGE_H_
 #define EDGE_H_
 
-#include <iostream>
-#include <vector>
-#include "vertex.h"
+class QuadEdge;
+class Vertex;
 
 using namespace std;
 
@@ -39,6 +38,8 @@ class Edge {
 		static Edge* connect(Edge *a, Edge *b);
 		/* disconnects edge e from the rest of the structure */
 		static void deleteEdge(Edge *e);
+		/* tests if two edges are same */
+		static bool equal(Edge *a, Edge *b);
 
 		void print();
 };

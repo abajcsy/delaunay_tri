@@ -1,5 +1,7 @@
 // QuadEdge class
-
+#include <iostream>
+#include <vector>
+#include "vertex.h"
 #include "edge.h"
 #include "quadedge.h"
 
@@ -92,30 +94,21 @@ Vertex* Edge::getDest(){
 void Edge::setOrigin(Vertex *pt){
 	origin = pt;
 	sym()->dest = pt;
+
+	origin->setEdge(this);
 }
 
 void Edge::setDest(Vertex *pt){
 	sym()->origin = pt;
 	dest = pt;
+
+	dest->setEdge(this->sym());
 }
 
 void Edge::print(){
 	cout << "Edge idx: " << idx << endl;
 	cout << "--> Origin [node# " << origin->getNodeNum() << "]: (" << origin->getPt()[0] << ", " << origin->getPt()[1] << ")\n";
 	cout << "--> Dest [node# " << dest->getNodeNum() << "]: (" << dest->getPt()[0] << ", " << dest->getPt()[1] << ")\n";	
-	/*if(!origin->getPt().empty() && !dest->getPt().empty()){
-		cout << "--> Origin: (" << origin->getPt()[0] << ", " << origin->getPt()[1] << ")\n";
-		cout << "--> Dest: (" << dest->getPt()[0] << ", " << dest->getPt()[1] << ")\n";	
-	}else if(!origin->getPt().empty() && dest->getPt().empty()){
-		cout << "--> Origin: (" << origin->getPt()[0] << ", " << origin->getPt()[1] << ")\n";
-		cout << "--> Dest: (---)\n";
-	}else if(origin->getPt().empty() && !dest->getPt().empty()){
-		cout << "--> Origin: (---)\n";
-		cout << "--> Dest: (" << dest->getPt()[0] << ", " << dest->getPt()[1] << ")\n";
-	}else{ //origin->getPt().empty() && dest->getPt().empty()
-		cout << "--> Origin: (---)\n";
-		cout << "--> Dest: (---)\n";	
-	}*/
 }
 
 /* Returns empty new edge */
@@ -157,7 +150,7 @@ void Edge::splice(Edge *a, Edge *b){
  */
 Edge* Edge::connect(Edge *a, Edge *b){
 	Edge *e = makeEdge();
-	e->setOrigin(a->getDest()); //TODO CHECK ALIASING HERE
+	e->setOrigin(a->getDest());
 	e->setDest(b->getOrigin());
 	splice(e, a->lnext());
 	splice(e->sym(), b);
@@ -168,6 +161,12 @@ Edge* Edge::connect(Edge *a, Edge *b){
 void Edge::deleteEdge(Edge *e){
 	splice(e, e->oprev());
 	splice(e->sym(), e->sym()->oprev());
+}
+
+/* Returns if two edges are identical */
+bool Edge::equal(Edge *a, Edge *b){
+	return Vertex::equal(a->getOrigin(), b->getOrigin()) && 
+		   Vertex::equal(a->getDest(), b->getDest());
 }
 
 

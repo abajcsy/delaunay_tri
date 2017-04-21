@@ -5,12 +5,16 @@
 #include <stdlib.h>
 #include <iostream>
 #include <vector>
+
+#include "edge.h"
+
 using namespace std;
 
 class Vertex {
 	public:
 		vector<double> pt;
 		int nodeNum;
+		Edge *edge;
 	
 	public:
 		Vertex();
@@ -18,8 +22,12 @@ class Vertex {
 		void setPtX(double x);
 		void setPtY(double y);
 		void setNodeNum(int num);
+		void setEdge(Edge *e);
+		void deleteEdge(Edge *e);
+
 		vector<double> getPt();
 		int getNodeNum();
+		Edge* getEdge();
 
 		static bool equal(Vertex *v1, Vertex *v2);
 };

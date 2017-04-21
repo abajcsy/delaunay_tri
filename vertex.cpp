@@ -1,5 +1,6 @@
 
 #include "vertex.h"
+#include "edge.h"
 
 Vertex::Vertex(){
 	pt.push_back(0.0);
@@ -23,12 +24,30 @@ void Vertex::setNodeNum(int num){
 	nodeNum = num;
 }
 
+// sets an outgoing edge from this vertex
+void Vertex::setEdge(Edge *e){
+	edge = e;
+}
+
+void Vertex::deleteEdge(Edge *e){
+	Edge *onextEdge = e->onext();
+	if(!Edge::equal(onextEdge, e)){
+		e = onextEdge;
+	}else{
+		e = NULL;
+	}
+}
+
 vector<double> Vertex::getPt(){
 	return pt;
 }
 
 int Vertex::getNodeNum(){
 	return nodeNum;
+}
+
+Edge* Vertex::getEdge(){
+	return edge;
 }
 
 bool Vertex::equal(Vertex *v1, Vertex *v2){
