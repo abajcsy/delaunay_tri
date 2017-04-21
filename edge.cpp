@@ -95,14 +95,14 @@ void Edge::setOrigin(Vertex *pt){
 	origin = pt;
 	sym()->dest = pt;
 
-	origin->setEdge(this);
+	pt->setEdge(this);
 }
 
 void Edge::setDest(Vertex *pt){
 	sym()->origin = pt;
 	dest = pt;
 
-	dest->setEdge(this->sym());
+	pt->setEdge(this->sym());
 }
 
 void Edge::print(){
@@ -161,6 +161,10 @@ Edge* Edge::connect(Edge *a, Edge *b){
 void Edge::deleteEdge(Edge *e){
 	splice(e, e->oprev());
 	splice(e->sym(), e->sym()->oprev());
+
+	// delete edge references in vertices
+	e->getOrigin()->deleteEdge(e);
+	e->sym()->getOrigin()->deleteEdge(e);
 }
 
 /* Returns if two edges are identical */

@@ -32,6 +32,7 @@ static double* vertexToDoubleArr(Vertex *v){
 	double *p = (double*)malloc(2*sizeof(double));
 	p[0] = v->getPt()[0];
 	p[1] = v->getPt()[1];
+	//cout << "=> vertexToDoubleArr(): (" << p[0] << ", " << p[1] << ")\n";
 	return p;
 }
 
@@ -78,36 +79,17 @@ static vector<Vertex*> parse(string filename){
  *  First line: <# of triangles> <nodes per triangle> <# of attributes>
  *  Remaining lines: <triangle #> <node> <node> <node> ... [attributes] 
  */
-static void writeEle(string filename, vector< vector<Vertex*> > triList){
+static void writeEle(string filename, vector< vector<int> > tris){
 	string delimiter = ".";
 	string name = filename.substr(0, filename.find(delimiter));
 	string newfilename = name + ".ele";
 	cout << "new file name: " << newfilename << endl;
 
-	// stores all unique parsed triangle information
-	vector< vector<int> > tris;
-
-	for(int i = 0; i < triList.size(); i++){
-		bool isLexLeast = 1;
-		for(int j = 1; j < triList[i].size(); j++){
-			if(!lex_compare(triList[i][0], triList[i][j])){
-				isLexLeast = 0;
-			}
-		}
-		if(isLexLeast){
-			vector<int> t;
-			t.push_back((i+1)); 
-			for(int j = 0; j < triList[i].size(); j++){
-				t.push_back(triList[i][j]->getNodeNum());
-			}
-			tris.push_back(t);
-		}
-	}
-
 	ofstream myfile (newfilename.c_str());
 	if (myfile.is_open()) {
 		myfile << tris.size() << " 3 0\n";
 		for(int i = 0; i < tris.size(); i++){
+			myfile << (i+1);
 			for(int j = 0; j < tris[i].size(); j++){
 				myfile << " " << tris[i][j];
 			}
@@ -118,16 +100,16 @@ static void writeEle(string filename, vector< vector<Vertex*> > triList){
 	else cout << "Unable to open file";
 }
 
-/* Prints delaunay triangulation to console. 
+/* Parses and prints delaunay triangulation to console. 
  */
-static vector< vector<Vertex*> > printTriangles(vector<Vertex*> points){
-	//TODO THIS ONLY WORKS FOR ONE TRIANGLE RIGHT NOW
+static vector< vector<int> > parseTriangles(vector<Vertex*> points){
 	// list of all triangle vertices
-	vector< vector<Vertex*> > triList;
+	//vector< vector<Vertex*> > triList;
+	vector< vector<int> > list;
 
 	cout << "------- PRINTING TRIANGULATION -------\n";
 
-	for(int i =0; i < points.size(); i++){
+	/*for(int i =0; i < points.size(); i++){
 		vector<Vertex*> tri;
 		tri.push_back(points[i]);
 		cout << "----printing vertex " << points[i]->getNodeNum() << "----\n";
@@ -143,29 +125,57 @@ static vector< vector<Vertex*> > printTriangles(vector<Vertex*> points){
 		triList.push_back(tri);	
 	}
 
-	/*for(int idx = 0; idx < triangles.size(); idx++){
-		// list of 3 vertices that make up one triangle
-		vector<Vertex*> tri;
+	cout << "printing other thing...\n";*/
 
-		Edge *e = triangles[idx];
-		cout << "Triangle " << (idx+1) << ":\n";
-		cout << "-- V" << e->getOrigin()->getNodeNum() << ": (" << e->getOrigin()->getPt()[0] << ", " << e->getOrigin()->getPt()[1] << ")\n";
-		// store current vertex for first triangle
-		tri.push_back(e->getOrigin());
-		Edge *curr_e = e->lnext();
-		int i = 2;
-		while(curr_e != NULL && !Vertex::equal(curr_e->getOrigin(), e->getOrigin())){
-			cout << "-- V" << curr_e->getOrigin()->getNodeNum() << ": (" << curr_e->getOrigin()->getPt()[0] << ", " << curr_e->getOrigin()->getPt()[1] << ")\n";
-			tri.push_back(curr_e->getOrigin());
-			curr_e = curr_e->lnext();
-			i += 1;
-		}	
+	for(int i =0; i < points.size(); i++){
+		//v.push_back(points[i]->getNodeNum();
+		Edge *og_e = points[i]->getEdge();
 
-		// save list of vertices to list
-		triList.push_back(tri);
-	} */
+		Edge *curr_e = og_e->onext();
+		Edge *next_e = curr_e->onext();
+
+		while(!Edge::equal(curr_e, og_e)){
+			Vertex *o = og_e->getOrigin();
+			Vertex *c = curr_e->getDest();
+			Vertex *n = next_e->getDest();
+
+			cout << "og origin: \n";
+			o->print();
+			cout << "curr_e origin: \n";
+			c->print();
+			cout << "next_e origin: \n";
+			n->print();
+			cout << endl;
+
+			double *p1 = vertexToDoubleArr(o); 
+			double *p2 = vertexToDoubleArr(c); 
+			double *p3 = vertexToDoubleArr(n); 
+			bool isCCW = (orient2d(p1,p2,p3) > 0);
+
+			// if original vertex lex least from next two points, 
+			// and all the pts are CCW from each other, add it to list
+			if(lex_compare(o,c) && lex_compare(o, n) && isCCW){			
+				vector<int> v;
+				v.push_back(o->getNodeNum());
+				v.push_back(c->getNodeNum());
+				v.push_back(n->getNodeNum());
+				list.push_back(v);
+			} 
+			curr_e = curr_e->onext();
+			next_e = curr_e->onext();
+		}
+	}
+
+
+	cout << "printing all the triangles....\n";
+	for(int i = 0; i < list.size(); i++){
+		for(int j = 0; j < list[i].size(); j++){
+			cout << " " << list[i][j];
+		}
+		cout << endl;
+	}
 	cout << "--------------------------------------\n";
-	return triList;
+	return list;
 }
 
 /* Tests if point X is to the right of a given edge e.
@@ -174,6 +184,7 @@ static double rightOf(Vertex *X, Edge *e){
 	double *p1 = vertexToDoubleArr(X); 				
 	double *edest = vertexToDoubleArr(e->getDest()); 	
 	double *eorg = vertexToDoubleArr(e->getOrigin()); 
+	cout << "in rightOf(): orient2d = " << orient2d(p1,edest,eorg) << endl;
 	return orient2d(p1,edest,eorg);
 }
 
@@ -189,8 +200,8 @@ static double leftOf(Vertex *X, Edge *e){
 
 /* Tests whether the edge e is above basel.
  */
-static double valid(Edge *e, Edge *basel){
-	return rightOf(e->getDest(), basel);
+static bool valid(Edge *e, Edge *basel){
+	return (rightOf(e->getDest(), basel)>0);
 }
 
 static vector<Edge*> altCutDT(vector<Vertex*> S){
@@ -219,11 +230,6 @@ static vector<Edge*> divideConquerDT(vector<Vertex*> S){
 		Edge *a = Edge::makeEdge();
 		Edge *b = Edge::makeEdge();
 		Edge::splice(a->sym(),b);
-
-		cout << "a: \n";
-		a->print();
-		cout << "b: \n";
-		b->print();
 
 		a->setOrigin(S[0]);
 		a->setDest(S[1]);
@@ -324,9 +330,13 @@ static vector<Edge*> divideConquerDT(vector<Vertex*> S){
 				double *pc = vertexToDoubleArr(lcand->getDest()); 		
 				double *pd = vertexToDoubleArr(lcand->onext()->getDest()); 
 				while(incircle(pa, pb, pc, pd) > 0){
+					cout << "locating first L point (lcand.Dest) to be encountered by rising\n";
 					Edge *t = lcand->onext();
 					Edge::deleteEdge(lcand);
 					lcand = t;
+					// update lcand for incircle test
+					pc = vertexToDoubleArr(lcand->getDest()); 		
+					pd = vertexToDoubleArr(lcand->onext()->getDest()); 
 				}
 			}
 			Edge *rcand = basel->oprev();
@@ -342,6 +352,9 @@ static vector<Edge*> divideConquerDT(vector<Vertex*> S){
 					Edge *t = rcand->oprev();
 					Edge::deleteEdge(rcand);
 					rcand = t;
+					// update rcand for incircle test
+					pc = vertexToDoubleArr(rcand->getDest()); 			
+					pd = vertexToDoubleArr(rcand->oprev()->getDest()); 
 				}
 			}
 			// if both lcand and rcand are invalid, then basel is upper common tangent
@@ -356,14 +369,20 @@ static vector<Edge*> divideConquerDT(vector<Vertex*> S){
 			double *pb = vertexToDoubleArr(lcand->getOrigin()); 
 			double *pc = vertexToDoubleArr(rcand->getOrigin()); 
 			double *pd = vertexToDoubleArr(rcand->getDest()); 	
-			if(!valid(lcand, basel) || (valid(rcand, basel) && incircle(pa, pb, pc, pd) > 0)){
+			if(!valid(lcand, basel) || (valid(rcand, basel) && (incircle(pa, pb, pc, pd) > 0))){
 				// add cross edge basel from rcand.Dest to basel.Dest
 				cout << "adding cross edge basel from rcand.Dest to basel.Dest\n";
 				basel = Edge::connect(rcand, basel->sym());
+				cout << "new basel:\n";
+				basel->print();
+				cout << endl;
 			}else{
 				// add cross edge basel from basel.Org to lcand.Dest
 				cout << "adding cross edge basel from basel.Org to lcand.Dest\n";
-				basel = Edge::connect(basel->sym(), lcand->sym());
+				basel = Edge::connect(basel->sym(), lcand->sym());	
+				cout << "new basel:\n";
+				basel->print();
+				cout << endl;
 			}
 		}
 		// setup return value [ldo, rdo]
@@ -409,7 +428,7 @@ int main (int argc, char* argv[]) {
 		}
 	}
 
-	cout << "\nPrinting edge connected to each vertex...\n";
+	/*cout << "\nPrinting edge connected to each vertex...\n";
 	for(int i =0; i < points.size(); i++){
 		cout << "----printing vertex " << points[i]->getNodeNum() << "----\n";
 		Edge *curr_e = points[i]->getEdge();
@@ -419,9 +438,9 @@ int main (int argc, char* argv[]) {
 			e->print();
 			e = e->onext();
 		}
-	}
+	}*/
 	
-	vector< vector<Vertex*> > triList = printTriangles(points);
+	vector< vector<int> > triList = parseTriangles(points);
 
 	cout << "Writing triangles to file... \n";
 	writeEle(argv[1], triList);

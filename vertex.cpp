@@ -53,3 +53,7 @@ Edge* Vertex::getEdge(){
 bool Vertex::equal(Vertex *v1, Vertex *v2){
 	return (v1->pt[0] == v2->pt[0] && v1->pt[1] == v2->pt[1]);
 }
+
+void Vertex::print(){
+	cout << "v " << nodeNum << ": (" << pt[0] << ", " << pt[1] << ")\n";
+}

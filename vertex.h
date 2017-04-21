@@ -28,6 +28,7 @@ class Vertex {
 		vector<double> getPt();
 		int getNodeNum();
 		Edge* getEdge();
+		void print();
 
 		static bool equal(Vertex *v1, Vertex *v2);
 };
