@@ -8,6 +8,7 @@
 #include <cstdlib>
 #include <algorithm>
 #include <math.h> 
+#include <ctime>
 
 #include "vertex.h"
 #include "edge.h"
@@ -52,9 +53,7 @@ static double* vertexToDoubleArr(Vertex *v){
 static vector<Vertex*> parse(string filename){
 	vector<Vertex*> data;
 	ifstream f(filename.c_str());
-
-	string line;
-
+	string line; 
 	int firstLine = 1;
 	while(getline(f,line)) {
 		if(!firstLine){
@@ -94,7 +93,7 @@ static void writeEle(string filename, vector< vector<int> > tris){
 	string delimiter = ".";
 	string name = filename.substr(0, filename.find(delimiter));
 	string newfilename = name + ".ele";
-	cout << "new file name: " << newfilename << endl;
+	cout << "New file name: " << newfilename << endl;
 
 	ofstream myfile (newfilename.c_str());
 	if (myfile.is_open()) {
@@ -117,7 +116,7 @@ static vector< vector<int> > parseTriangles(vector<Vertex*> points){
 	// list of all triangle vertices
 	vector< vector<int> > list;
 
-	cout << "------- PRINTING TRIANGULATION -------\n";
+	//cout << "------- PRINTING TRIANGULATION -------\n";
 
 	for(int i =0; i < points.size(); i++){
 		//v.push_back(points[i]->getNodeNum();
@@ -151,14 +150,14 @@ static vector< vector<int> > parseTriangles(vector<Vertex*> points){
 	}
 
 
-	cout << "printing all the triangles....\n";
+	/*cout << "printing all the triangles....\n";
 	for(int i = 0; i < list.size(); i++){
 		for(int j = 0; j < list[i].size(); j++){
 			cout << " " << list[i][j];
 		}
 		cout << endl;
 	}
-	cout << "--------------------------------------\n";
+	cout << "--------------------------------------\n";*/
 	return list;
 }
 
@@ -197,15 +196,15 @@ static bool valid(Edge *e, Edge *basel){
  * cutDir - x (0) or y (1) cut direction 
  */
 static vector<Edge*> altCutDT(vector<Vertex*> S, bool cutDir){
-	cout << "in altCutDT()\n";
+	//cout << "in altCutDT()\n";
 	vector<Edge*> ret;
 	if(S.size() == 2){
-		cout << "Case: |S| = 2" << endl;
+		//cout << "Case: |S| = 2" << endl;
 		Edge *a = Edge::makeEdge();
 		a->setOrigin(S[0]);
 		a->setDest(S[1]);
-		cout << "a: \n";
-		a->print();
+		//cout << "a: \n";
+		//a->print();
 		// setup return value [a, a.Sym]
 		ret.push_back(a);
 		ret.push_back(a->sym());
@@ -213,7 +212,7 @@ static vector<Edge*> altCutDT(vector<Vertex*> S, bool cutDir){
 		// sort points
 		std::sort(S.begin(), S.end(), lex_compare);
 	
-		cout << "Case: |S| = 3" << endl;
+		//cout << "Case: |S| = 3" << endl;
 		Edge *a = Edge::makeEdge();
 		Edge *b = Edge::makeEdge();
 		Edge::splice(a->sym(),b);
@@ -223,38 +222,33 @@ static vector<Edge*> altCutDT(vector<Vertex*> S, bool cutDir){
 		b->setOrigin(S[1]);
 		b->setDest(S[2]);
 
-		cout << "NEW a:\n";
-		a->print();
-		cout << "NEW b:\n";
-		b->print();
-
 		double *p1 = vertexToDoubleArr(S[0]); 
 		double *p2 = vertexToDoubleArr(S[1]); 
 		double *p3 = vertexToDoubleArr(S[2]); 
 		if(orient2d(p1,p2,p3) > 0){
-			cout << "Connecting b to a with c:\n";
+			//cout << "Connecting b to a with c:\n";
 			Edge *c = Edge::connect(b,a);
-			c->print();
-			cout << "Returning [a, b.Sym]\n";
+			//c->print();
+			//cout << "Returning [a, b.Sym]\n";
 			// setup return value [a, b.Sym]
 			ret.push_back(a);
 			ret.push_back(b->sym());
 		}else if(orient2d(p1,p3,p2) > 0){
-			cout << "Connecting b to a with c:\n";
+			//cout << "Connecting b to a with c:\n";
 			Edge *c = Edge::connect(b,a);
-			c->print();
-			cout << "Returning [c.Sym, c]\n";
+			//c->print();
+			//cout << "Returning [c.Sym, c]\n";
 			// setup return value [c.Sym, c]
 			ret.push_back(c->sym());
 			ret.push_back(c);
 		}else{ // points are colinear
-			cout << "Returning [a, b.Sym]\n";
+			//cout << "Returning [a, b.Sym]\n";
 			// setup return value [a, b.Sym]
 			ret.push_back(a);
 			ret.push_back(b->sym());
 		}	
 	}else{ // S.size() >= 4
-		cout << "Case: |S| >= 4" << endl;
+		//cout << "Case: |S| >= 4" << endl;
 		/* nth_element(RandomIt first, RandomIt nth, RandomIt last)
 		 * rearranges elements [first, last) such that all elements
 	  	 * before new nth element are <= nth ascending
@@ -277,57 +271,24 @@ static vector<Edge*> altCutDT(vector<Vertex*> S, bool cutDir){
 		Edge *ldi = ldoldi[1];
 		Edge *rdi = rdirdo[0]; 
 		Edge *rdo = rdirdo[1];
-		cout << "~~~~~~ CUT DIR IS " << cutDir << "~~~~~~~~\n";
+
 		// if in the horizontal y-cut case, adjust the convex hull pointers
 		if(cutDir == 1){
-			cout << "ldo: \n";
-			ldo->print();
-			cout << "ldo->lprev(): \n";
-			ldo->lprev()->print();
-			cout << "result of y-compare: " << y_compare(ldo->getOrigin(), ldo->lprev()->getOrigin()) << endl;
-			
 			while(y_compare(ldo->getOrigin(), ldo->rnext()->getOrigin())){
 				ldo = ldo->rnext();
 			}
-
-			cout << "final ldo: \n";
-			ldo->print(); 
-
-			
-			cout << "ldi: \n";
-			ldi->print();
-			cout << "ldi->rnext(): \n";
-			ldi->rnext()->print();
-			cout << "result of y-compare: " << y_compare(ldi->getOrigin(), ldi->rnext()->getOrigin()) << endl;
-			
 
 			while(y_compare(ldi->lnext()->getOrigin(), ldi->getOrigin())){
 				ldi = ldi->lnext();			
 			}
 
-			cout << "final ldi: \n";
-			ldi->print(); 
-
-			
-			cout << "rdi: \n";
-			rdi->print();
-
 			while(y_compare(rdi->getOrigin(), rdi->rnext()->getOrigin())){
 				rdi = rdi->rnext();
 			}
 
-			cout << "final rdi: \n";
-			rdi->print(); 
-
-			cout << "rdo: \n";
-			rdo->print();
-
 			while(y_compare(rdo->lnext()->getOrigin(), rdo->getOrigin())){
 				rdo = rdo->lnext();
 			}
-
-			cout << "final rdo: \n";
-			rdo->print(); 
 
 			Edge *tmpldo = ldo;
 			Edge *tmpldi = ldi;
@@ -340,7 +301,6 @@ static vector<Edge*> altCutDT(vector<Vertex*> S, bool cutDir){
 			
 		}
 		
-		cout << "Got left and right triangulations" << endl;
 		// compute lower common tangent of L and R
 		while(true){
 			if(leftOf(rdi->getOrigin(), ldi) > 0){
@@ -355,47 +315,28 @@ static vector<Edge*> altCutDT(vector<Vertex*> S, bool cutDir){
 		}
 		// create first cross edge base1 from rdi.Org to ldi.Org
 		Edge *basel = Edge::connect(rdi->sym(), ldi); 
-		cout << "basel connected:\n";
-		basel->print();
+
 		if(Vertex::equal(ldi->getOrigin(), ldo->getOrigin())){
-			cout << "ldoldi equal\n";
 			ldo = basel->sym();
 		}
 		if(Vertex::equal(rdi->getOrigin(), rdo->getOrigin())){
-			cout << "rdirdo equal\n";
 			rdo = basel;
 		}
-
-		cout << "BEFORE MERGE: LDI: \n";
-		ldi->print();
-		cout << endl;
-		cout << "BEFORE MERGE: RDI: \n";
-		rdi->print(); 
-		cout << "BEFORE MERGE: LDO: \n";
-		ldo->print();
-		cout << endl;
-		cout << "BEFORE MERGE: RDO: \n";
-		rdo->print(); 
-	
-
-
 
 
 		// merge loop
 		while(true){
-			cout << "in merge loop...\n";
+			//cout << "in merge loop...\n";
 			// locate first L point (lcand.Dest) to be encountered by rising
 			// bubble and delete L edges out of basel.Dest that fail circle test
 			Edge *lcand = basel->sym()->onext();
-			cout << "lcand:\n";
-			lcand->print();
 			if(valid(lcand, basel)){
 				double *pa = vertexToDoubleArr(basel->getDest()); 	
 				double *pb = vertexToDoubleArr(basel->getOrigin()); 		
 				double *pc = vertexToDoubleArr(lcand->getDest()); 		
 				double *pd = vertexToDoubleArr(lcand->onext()->getDest()); 
 				while(incircle(pa, pb, pc, pd) > 0){
-					cout << "locating first L point (lcand.Dest) to be encountered by rising\n";
+					//cout << "locating first L point (lcand.Dest) to be encountered by rising\n";
 					Edge *t = lcand->onext();
 					Edge::deleteEdge(lcand);
 					lcand = t;
@@ -405,8 +346,6 @@ static vector<Edge*> altCutDT(vector<Vertex*> S, bool cutDir){
 				}
 			}
 			Edge *rcand = basel->oprev();
-			cout << "rcand:\n";
-			rcand->print();
 			// symmetrically locate the first R point to be hit, delete R edges
 			if(valid(rcand, basel)){
 				double *pa = vertexToDoubleArr(basel->getDest()); 			
@@ -424,7 +363,7 @@ static vector<Edge*> altCutDT(vector<Vertex*> S, bool cutDir){
 			}
 			// if both lcand and rcand are invalid, then basel is upper common tangent
 			if(!valid(lcand, basel) && !valid(rcand, basel)){
-				cout << "lcand and rcand invalid. basel is upper common tangent.\n";
+				//cout << "lcand and rcand invalid. basel is upper common tangent.\n";
 				break;
 			}
 			// the next cross edge is to be connected to either lcand.Dest or 
@@ -436,18 +375,18 @@ static vector<Edge*> altCutDT(vector<Vertex*> S, bool cutDir){
 			double *pd = vertexToDoubleArr(rcand->getDest()); 	
 			if(!valid(lcand, basel) || (valid(rcand, basel) && (incircle(pa, pb, pc, pd) > 0))){
 				// add cross edge basel from rcand.Dest to basel.Dest
-				cout << "adding cross edge basel from rcand.Dest to basel.Dest\n";
+				//cout << "adding cross edge basel from rcand.Dest to basel.Dest\n";
 				basel = Edge::connect(rcand, basel->sym());
-				cout << "new basel:\n";
-				basel->print();
-				cout << endl;
+				//cout << "new basel:\n";
+				//basel->print();
+				//cout << endl;
 			}else{
 				// add cross edge basel from basel.Org to lcand.Dest
-				cout << "adding cross edge basel from basel.Org to lcand.Dest\n";
+				//cout << "adding cross edge basel from basel.Org to lcand.Dest\n";
 				basel = Edge::connect(basel->sym(), lcand->sym());	
-				cout << "new basel:\n";
-				basel->print();
-				cout << endl;
+				//cout << "new basel:\n";
+				//basel->print();
+				//cout << endl;
 			}
 		}
 
@@ -459,12 +398,7 @@ static vector<Edge*> altCutDT(vector<Vertex*> S, bool cutDir){
 			while(lex_compare(rdo->getOrigin(), rdo->lprev()->getOrigin())){
 				rdo = rdo->lprev();
 			}
-		}
-		cout << "RETURNED LDO: \n";
-		ldo->print();
-		cout << endl;
-		cout << "RETURNED RDO: \n";
-		rdo->print(); 
+		} 
 		// setup return value [ldo, rdo]
 		ret.push_back(ldo);
 		ret.push_back(rdo);
@@ -476,20 +410,20 @@ static vector<Edge*> altCutDT(vector<Vertex*> S, bool cutDir){
  * Reference: Gubias and Stolfi.
  */
 static vector<Edge*> divideConquerDT(vector<Vertex*> S){
-	cout << "in divideConquerDT()\n";
+	//cout << "in divideConquerDT()\n";
 	vector<Edge*> ret;
 	if(S.size() == 2){
-		cout << "Case: |S| = 2" << endl;
+		//cout << "Case: |S| = 2" << endl;
 		Edge *a = Edge::makeEdge();
 		a->setOrigin(S[0]);
 		a->setDest(S[1]);
-		cout << "a: \n";
-		a->print();
+		//cout << "a: \n";
+		//a->print();
 		// setup return value [a, a.Sym]
 		ret.push_back(a);
 		ret.push_back(a->sym());
 	}else if(S.size() == 3){
-		cout << "Case: |S| = 3" << endl;
+		//cout << "Case: |S| = 3" << endl;
 		Edge *a = Edge::makeEdge();
 		Edge *b = Edge::makeEdge();
 		Edge::splice(a->sym(),b);
@@ -499,38 +433,38 @@ static vector<Edge*> divideConquerDT(vector<Vertex*> S){
 		b->setOrigin(S[1]);
 		b->setDest(S[2]);
 
-		cout << "NEW a:\n";
-		a->print();
-		cout << "NEW b:\n";
-		b->print();
+		//cout << "NEW a:\n";
+		//a->print();
+		//cout << "NEW b:\n";
+		//b->print();
 
 		double *p1 = vertexToDoubleArr(S[0]); 
 		double *p2 = vertexToDoubleArr(S[1]); 
 		double *p3 = vertexToDoubleArr(S[2]); 
 		if(orient2d(p1,p2,p3) > 0){
-			cout << "Connecting b to a with c:\n";
+			//cout << "Connecting b to a with c:\n";
 			Edge *c = Edge::connect(b,a);
-			c->print();
-			cout << "Returning [a, b.Sym]\n";
+			//c->print();
+			//cout << "Returning [a, b.Sym]\n";
 			// setup return value [a, b.Sym]
 			ret.push_back(a);
 			ret.push_back(b->sym());
 		}else if(orient2d(p1,p3,p2) > 0){
-			cout << "Connecting b to a with c:\n";
+			//cout << "Connecting b to a with c:\n";
 			Edge *c = Edge::connect(b,a);
-			c->print();
-			cout << "Returning [c.Sym, c]\n";
+			//c->print();
+			//cout << "Returning [c.Sym, c]\n";
 			// setup return value [c.Sym, c]
 			ret.push_back(c->sym());
 			ret.push_back(c);
 		}else{ // points are colinear
-			cout << "Returning [a, b.Sym]\n";
+			//cout << "Returning [a, b.Sym]\n";
 			// setup return value [a, b.Sym]
 			ret.push_back(a);
 			ret.push_back(b->sym());
 		}	
 	}else{ // S.size() >= 4
-		cout << "Case: |S| >= 4" << endl;
+		//cout << "Case: |S| >= 4" << endl;
 		// split points in half, L = left half of S, R = right half of S 
 		vector<Vertex*> L(S.begin(), S.begin() + S.size()/2),
                		    R(S.begin() + S.size()/2, S.end());
@@ -540,7 +474,7 @@ static vector<Edge*> divideConquerDT(vector<Vertex*> S){
 		Edge *ldi = ldoldi[1];
 		Edge *rdi = rdirdo[0]; 
 		Edge *rdo = rdirdo[1];
-		cout << "Got left and right triangulations" << endl;
+		//cout << "Got left and right triangulations" << endl;
 		// compute lower common tangent of L and R
 		while(true){
 			//cout << "rdi:\n";
@@ -557,43 +491,33 @@ static vector<Edge*> divideConquerDT(vector<Vertex*> S){
 				break;
 			}
 		}
-		/*cout << "ldo printed:\n";
-		ldo->print();
-		cout << "ldi printed:\n";
-		ldi->print();
-		cout << "rdi printed:\n";
-		rdi->print();
-		cout << "rdi->sym() printed:\n";
-		rdi->sym()->print();
-		cout << "rdo printed:\n";
-		rdo->print();*/
 		// create first cross edge base1 from rdi.Org to ldi.Org
 		Edge *basel = Edge::connect(rdi->sym(), ldi); 
-		cout << "basel connected:\n";
-		basel->print();
+		//cout << "basel connected:\n";
+		//basel->print();
 		if(Vertex::equal(ldi->getOrigin(), ldo->getOrigin())){
-			cout << "ldoldi equal\n";
+			//cout << "ldoldi equal\n";
 			ldo = basel->sym();
 		}
 		if(Vertex::equal(rdi->getOrigin(), rdo->getOrigin())){
-			cout << "rdirdo equal\n";
+			//cout << "rdirdo equal\n";
 			rdo = basel;
 		}
 		// merge loop
 		while(true){
-			cout << "in merge loop...\n";
+			//cout << "in merge loop...\n";
 			// locate first L point (lcand.Dest) to be encountered by rising
 			// bubble and delete L edges out of basel.Dest that fail circle test
 			Edge *lcand = basel->sym()->onext();
-			cout << "lcand:\n";
-			lcand->print();
+			//cout << "lcand:\n";
+			//lcand->print();
 			if(valid(lcand, basel)){
 				double *pa = vertexToDoubleArr(basel->getDest()); 	
 				double *pb = vertexToDoubleArr(basel->getOrigin()); 		
 				double *pc = vertexToDoubleArr(lcand->getDest()); 		
 				double *pd = vertexToDoubleArr(lcand->onext()->getDest()); 
 				while(incircle(pa, pb, pc, pd) > 0){
-					cout << "locating first L point (lcand.Dest) to be encountered by rising\n";
+					//cout << "locating first L point (lcand.Dest) to be encountered by rising\n";
 					Edge *t = lcand->onext();
 					Edge::deleteEdge(lcand);
 					lcand = t;
@@ -603,8 +527,8 @@ static vector<Edge*> divideConquerDT(vector<Vertex*> S){
 				}
 			}
 			Edge *rcand = basel->oprev();
-			cout << "rcand:\n";
-			rcand->print();
+			//cout << "rcand:\n";
+			//rcand->print();
 			// symmetrically locate the first R point to be hit, delete R edges
 			if(valid(rcand, basel)){
 				double *pa = vertexToDoubleArr(basel->getDest()); 			
@@ -622,7 +546,7 @@ static vector<Edge*> divideConquerDT(vector<Vertex*> S){
 			}
 			// if both lcand and rcand are invalid, then basel is upper common tangent
 			if(!valid(lcand, basel) && !valid(rcand, basel)){
-				cout << "lcand and rcand invalid. basel is upper common tangent.\n";
+				//cout << "lcand and rcand invalid. basel is upper common tangent.\n";
 				break;
 			}
 			// the next cross edge is to be connected to either lcand.Dest or 
@@ -634,18 +558,18 @@ static vector<Edge*> divideConquerDT(vector<Vertex*> S){
 			double *pd = vertexToDoubleArr(rcand->getDest()); 	
 			if(!valid(lcand, basel) || (valid(rcand, basel) && (incircle(pa, pb, pc, pd) > 0))){
 				// add cross edge basel from rcand.Dest to basel.Dest
-				cout << "adding cross edge basel from rcand.Dest to basel.Dest\n";
+				//cout << "adding cross edge basel from rcand.Dest to basel.Dest\n";
 				basel = Edge::connect(rcand, basel->sym());
-				cout << "new basel:\n";
-				basel->print();
-				cout << endl;
+				//cout << "new basel:\n";
+				//basel->print();
+				//cout << endl;
 			}else{
 				// add cross edge basel from basel.Org to lcand.Dest
-				cout << "adding cross edge basel from basel.Org to lcand.Dest\n";
+				//cout << "adding cross edge basel from basel.Org to lcand.Dest\n";
 				basel = Edge::connect(basel->sym(), lcand->sym());	
-				cout << "new basel:\n";
-				basel->print();
-				cout << endl;
+				//cout << "new basel:\n";
+				//basel->print();
+				//cout << endl;
 			}
 		}
 		// setup return value [ldo, rdo]
@@ -667,40 +591,30 @@ int main (int argc, char* argv[]) {
 
 	cout << "Reading points from file " << argv[1] << "...\n";
 	vector<Vertex*> points = parse(argv[1]);
-	for(int i =0; i < points.size(); i++){
-		cout << "node " << points[i]->nodeNum << ": (" << points[i]->getPt()[0] << ", " << points[i]->getPt()[1] << ")\n";
-	}
 
 	// compute delaunay triangulation with standard diviclearde & conquer algorithm
 	vector<Edge*> triangles;
 	if (argv[2][0] == '-') {
 		if(argv[2][1] == 'd'){
+			clock_t start_s = clock();
 			// sort points lexicographically (break ties with y-coord)
 			std::sort(points.begin(), points.end(), lex_compare);
-
-			cout << "Sorted points lexicographically: \n";
-			for(int i =0; i < points.size(); i++){
-				cout << "(" << points[i]->getPt()[0] << ", " << points[i]->getPt()[1] << ")\n";
-			}
-
+			// run standard divide and conquer delaunay triangulation
 			triangles = divideConquerDT(points);
+			
+			clock_t stop_s = clock();
+			cout << "time (s): " << (stop_s-start_s)/double(CLOCKS_PER_SEC) << endl;
 		}else if(argv[2][1] == 'a'){
+			clock_t start_s=clock();
+
 			bool cutDir = 0;
+			// run modified alternating cut delaunay triangulation 
 			triangles = altCutDT(points, cutDir);
+
+			clock_t stop_s=clock();
+			cout << "time (s): " << (stop_s-start_s)/double(CLOCKS_PER_SEC) << endl;
 		}
 	}
-
-	/*cout << "\nPrinting edge connected to each vertex...\n";
-	for(int i =0; i < points.size(); i++){
-		cout << "----printing vertex " << points[i]->getNodeNum() << "----\n";
-		Edge *curr_e = points[i]->getEdge();
-		curr_e->print();
-		Edge *e = curr_e->onext();
-		while(!Edge::equal(e, curr_e)){ 
-			e->print();
-			e = e->onext();
-		}
-	}*/
 	
 	vector< vector<int> > triList = parseTriangles(points);
 
