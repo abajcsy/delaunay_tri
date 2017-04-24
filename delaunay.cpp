@@ -17,13 +17,24 @@
 using namespace std;
 using std::ifstream;
 
-/* Lexicographic comparator for sorting.
+/* Lexicographic comparator for sorting. (compares x, then y)
+ * returns if v1 < v2 based on x-coord
  */
 bool lex_compare(Vertex *v1, Vertex *v2) {
 	if(v1->pt[0] == v2->pt[0]){
 		return v1->pt[1] < v2->pt[1];
 	}
 	return v1->pt[0] < v2->pt[0];
+}
+
+/* y-coordinate based comparator for sorting. (compares y, then x)
+ * returns if v1 < v2 based on y-coord
+ */
+bool y_compare(Vertex *v1, Vertex *v2) {
+	if(v1->pt[1] == v2->pt[1]){
+		return v1->pt[0] < v2->pt[0];
+	}
+	return v1->pt[1] < v2->pt[1];
 }
 
 /* Helper function to convert to proper data types for predicates.h
@@ -177,16 +188,295 @@ static bool valid(Edge *e, Edge *basel){
 	return (rightOf(e->getDest(), basel)>0);
 }
 
-static vector<Edge*> altCutDT(vector<Vertex*> S){
-	//TODO IMPLEMENT THIS
+/* Delaunay triangulation with alternating cut modification
+ * uses:
+ *	- nth_element() "is a partial sorting algorithm that rearranges elements in [first, last) such that:
+ *  The element pointed at by nth is changed to whatever element would occur in that position if [first, last) was sorted.
+ *  All of the elements before this new nth element are less than or equal to the elements after the new nth element."
+ *  http://en.cppreference.com/w/cpp/algorithm/nth_element 
+ * cutDir - x (0) or y (1) cut direction 
+ */
+static vector<Edge*> altCutDT(vector<Vertex*> S, bool cutDir){
+	cout << "in altCutDT()\n";
 	vector<Edge*> ret;
-	return ret;
+	if(S.size() == 2){
+		cout << "Case: |S| = 2" << endl;
+		Edge *a = Edge::makeEdge();
+		a->setOrigin(S[0]);
+		a->setDest(S[1]);
+		cout << "a: \n";
+		a->print();
+		// setup return value [a, a.Sym]
+		ret.push_back(a);
+		ret.push_back(a->sym());
+	}else if(S.size() == 3){
+		// sort points
+		std::sort(S.begin(), S.end(), lex_compare);
+	
+		cout << "Case: |S| = 3" << endl;
+		Edge *a = Edge::makeEdge();
+		Edge *b = Edge::makeEdge();
+		Edge::splice(a->sym(),b);
+
+		a->setOrigin(S[0]);
+		a->setDest(S[1]);
+		b->setOrigin(S[1]);
+		b->setDest(S[2]);
+
+		cout << "NEW a:\n";
+		a->print();
+		cout << "NEW b:\n";
+		b->print();
+
+		double *p1 = vertexToDoubleArr(S[0]); 
+		double *p2 = vertexToDoubleArr(S[1]); 
+		double *p3 = vertexToDoubleArr(S[2]); 
+		if(orient2d(p1,p2,p3) > 0){
+			cout << "Connecting b to a with c:\n";
+			Edge *c = Edge::connect(b,a);
+			c->print();
+			cout << "Returning [a, b.Sym]\n";
+			// setup return value [a, b.Sym]
+			ret.push_back(a);
+			ret.push_back(b->sym());
+		}else if(orient2d(p1,p3,p2) > 0){
+			cout << "Connecting b to a with c:\n";
+			Edge *c = Edge::connect(b,a);
+			c->print();
+			cout << "Returning [c.Sym, c]\n";
+			// setup return value [c.Sym, c]
+			ret.push_back(c->sym());
+			ret.push_back(c);
+		}else{ // points are colinear
+			cout << "Returning [a, b.Sym]\n";
+			// setup return value [a, b.Sym]
+			ret.push_back(a);
+			ret.push_back(b->sym());
+		}	
+	}else{ // S.size() >= 4
+		cout << "Case: |S| >= 4" << endl;
+		/* nth_element(RandomIt first, RandomIt nth, RandomIt last)
+		 * rearranges elements [first, last) such that all elements
+	  	 * before new nth element are <= nth ascending
+		 */
+		if(cutDir == 0){
+			// cut on x-coords
+			nth_element(S.begin(), S.begin() + S.size()/2, S.end(), lex_compare);
+		}else{
+			// cut on y-coords
+			nth_element(S.begin(), S.begin() + S.size()/2, S.end(), y_compare);
+		}
+		// split points in half, L = left half of S, R = right half of S 
+		vector<Vertex*> L(S.begin(), S.begin() + S.size()/2),
+               		    R(S.begin() + S.size()/2, S.end());
+
+		vector<Edge*> ldoldi = altCutDT(L, !cutDir);
+		vector<Edge*> rdirdo = altCutDT(R, !cutDir);
+
+		Edge *ldo = ldoldi[0]; 
+		Edge *ldi = ldoldi[1];
+		Edge *rdi = rdirdo[0]; 
+		Edge *rdo = rdirdo[1];
+		cout << "~~~~~~ CUT DIR IS " << cutDir << "~~~~~~~~\n";
+		// if in the horizontal y-cut case, adjust the convex hull pointers
+		if(cutDir == 1){
+			cout << "ldo: \n";
+			ldo->print();
+			cout << "ldo->lprev(): \n";
+			ldo->lprev()->print();
+			cout << "result of y-compare: " << y_compare(ldo->getOrigin(), ldo->lprev()->getOrigin()) << endl;
+			
+			while(y_compare(ldo->getOrigin(), ldo->rnext()->getOrigin())){
+				ldo = ldo->rnext();
+			}
+
+			cout << "final ldo: \n";
+			ldo->print(); 
+
+			
+			cout << "ldi: \n";
+			ldi->print();
+			cout << "ldi->rnext(): \n";
+			ldi->rnext()->print();
+			cout << "result of y-compare: " << y_compare(ldi->getOrigin(), ldi->rnext()->getOrigin()) << endl;
+			
+
+			while(y_compare(ldi->lnext()->getOrigin(), ldi->getOrigin())){
+				ldi = ldi->lnext();			
+			}
+
+			cout << "final ldi: \n";
+			ldi->print(); 
+
+			
+			cout << "rdi: \n";
+			rdi->print();
+
+			while(y_compare(rdi->getOrigin(), rdi->rnext()->getOrigin())){
+				rdi = rdi->rnext();
+			}
+
+			cout << "final rdi: \n";
+			rdi->print(); 
+
+			cout << "rdo: \n";
+			rdo->print();
+
+			while(y_compare(rdo->lnext()->getOrigin(), rdo->getOrigin())){
+				rdo = rdo->lnext();
+			}
+
+			cout << "final rdo: \n";
+			rdo->print(); 
+
+			Edge *tmpldo = ldo;
+			Edge *tmpldi = ldi;
+
+			// swap pointers appropriately
+			ldi = rdo;
+			rdo = tmpldi;
+			ldo = rdi;			
+			rdi = tmpldo;
+			
+		}
+		
+		cout << "Got left and right triangulations" << endl;
+		// compute lower common tangent of L and R
+		while(true){
+			if(leftOf(rdi->getOrigin(), ldi) > 0){
+				//cout << "rdi origin is leftof ldi\n";
+				ldi = ldi->lnext();
+			}else if(rightOf(ldi->getOrigin(), rdi) > 0){
+				//cout << "ldi origin is rightof rdi\n";
+				rdi = rdi->rprev();
+			}else{
+				break;
+			}
+		}
+		// create first cross edge base1 from rdi.Org to ldi.Org
+		Edge *basel = Edge::connect(rdi->sym(), ldi); 
+		cout << "basel connected:\n";
+		basel->print();
+		if(Vertex::equal(ldi->getOrigin(), ldo->getOrigin())){
+			cout << "ldoldi equal\n";
+			ldo = basel->sym();
+		}
+		if(Vertex::equal(rdi->getOrigin(), rdo->getOrigin())){
+			cout << "rdirdo equal\n";
+			rdo = basel;
+		}
+
+		cout << "BEFORE MERGE: LDI: \n";
+		ldi->print();
+		cout << endl;
+		cout << "BEFORE MERGE: RDI: \n";
+		rdi->print(); 
+		cout << "BEFORE MERGE: LDO: \n";
+		ldo->print();
+		cout << endl;
+		cout << "BEFORE MERGE: RDO: \n";
+		rdo->print(); 
+	
+
+
+
+
+		// merge loop
+		while(true){
+			cout << "in merge loop...\n";
+			// locate first L point (lcand.Dest) to be encountered by rising
+			// bubble and delete L edges out of basel.Dest that fail circle test
+			Edge *lcand = basel->sym()->onext();
+			cout << "lcand:\n";
+			lcand->print();
+			if(valid(lcand, basel)){
+				double *pa = vertexToDoubleArr(basel->getDest()); 	
+				double *pb = vertexToDoubleArr(basel->getOrigin()); 		
+				double *pc = vertexToDoubleArr(lcand->getDest()); 		
+				double *pd = vertexToDoubleArr(lcand->onext()->getDest()); 
+				while(incircle(pa, pb, pc, pd) > 0){
+					cout << "locating first L point (lcand.Dest) to be encountered by rising\n";
+					Edge *t = lcand->onext();
+					Edge::deleteEdge(lcand);
+					lcand = t;
+					// update lcand for incircle test
+					pc = vertexToDoubleArr(lcand->getDest()); 		
+					pd = vertexToDoubleArr(lcand->onext()->getDest()); 
+				}
+			}
+			Edge *rcand = basel->oprev();
+			cout << "rcand:\n";
+			rcand->print();
+			// symmetrically locate the first R point to be hit, delete R edges
+			if(valid(rcand, basel)){
+				double *pa = vertexToDoubleArr(basel->getDest()); 			
+				double *pb = vertexToDoubleArr(basel->getOrigin()); 		
+				double *pc = vertexToDoubleArr(rcand->getDest()); 			
+				double *pd = vertexToDoubleArr(rcand->oprev()->getDest()); 
+				while(incircle(pa, pb, pc, pd) > 0){
+					Edge *t = rcand->oprev();
+					Edge::deleteEdge(rcand);
+					rcand = t;
+					// update rcand for incircle test
+					pc = vertexToDoubleArr(rcand->getDest()); 			
+					pd = vertexToDoubleArr(rcand->oprev()->getDest()); 
+				}
+			}
+			// if both lcand and rcand are invalid, then basel is upper common tangent
+			if(!valid(lcand, basel) && !valid(rcand, basel)){
+				cout << "lcand and rcand invalid. basel is upper common tangent.\n";
+				break;
+			}
+			// the next cross edge is to be connected to either lcand.Dest or 
+			// rcand.Dest. If both are valid then choose the appropriate one
+			// using the incircle test.
+			double *pa = vertexToDoubleArr(lcand->getDest()); 
+			double *pb = vertexToDoubleArr(lcand->getOrigin()); 
+			double *pc = vertexToDoubleArr(rcand->getOrigin()); 
+			double *pd = vertexToDoubleArr(rcand->getDest()); 	
+			if(!valid(lcand, basel) || (valid(rcand, basel) && (incircle(pa, pb, pc, pd) > 0))){
+				// add cross edge basel from rcand.Dest to basel.Dest
+				cout << "adding cross edge basel from rcand.Dest to basel.Dest\n";
+				basel = Edge::connect(rcand, basel->sym());
+				cout << "new basel:\n";
+				basel->print();
+				cout << endl;
+			}else{
+				// add cross edge basel from basel.Org to lcand.Dest
+				cout << "adding cross edge basel from basel.Org to lcand.Dest\n";
+				basel = Edge::connect(basel->sym(), lcand->sym());	
+				cout << "new basel:\n";
+				basel->print();
+				cout << endl;
+			}
+		}
+
+		// if in the horizontal y-cut case, adjust the convex hull pointers
+		if(cutDir == 1){
+			while(lex_compare(ldo->rprev()->getOrigin(), ldo->getOrigin())){
+				ldo = ldo->rprev();
+			}
+			while(lex_compare(rdo->getOrigin(), rdo->lprev()->getOrigin())){
+				rdo = rdo->lprev();
+			}
+		}
+		cout << "RETURNED LDO: \n";
+		ldo->print();
+		cout << endl;
+		cout << "RETURNED RDO: \n";
+		rdo->print(); 
+		// setup return value [ldo, rdo]
+		ret.push_back(ldo);
+		ret.push_back(rdo);
+	}
+	return ret; 
 }
 
 /* Constructs delaunay triangulation with the divide and conquer algorithm
  * Reference: Gubias and Stolfi.
  */
 static vector<Edge*> divideConquerDT(vector<Vertex*> S){
+	cout << "in divideConquerDT()\n";
 	vector<Edge*> ret;
 	if(S.size() == 2){
 		cout << "Case: |S| = 2" << endl;
@@ -381,23 +671,22 @@ int main (int argc, char* argv[]) {
 		cout << "node " << points[i]->nodeNum << ": (" << points[i]->getPt()[0] << ", " << points[i]->getPt()[1] << ")\n";
 	}
 
-	// sort points lexicographically (break ties with y-coord)
-	std::sort(points.begin(), points.end(), lex_compare);
-
-	// TODO GET RID OF DUPLICATE POINTS
-
-	cout << "Sorted points lexicographically: \n";
-	for(int i =0; i < points.size(); i++){
-		cout << "(" << points[i]->getPt()[0] << ", " << points[i]->getPt()[1] << ")\n";
-	}
-
 	// compute delaunay triangulation with standard diviclearde & conquer algorithm
 	vector<Edge*> triangles;
 	if (argv[2][0] == '-') {
 		if(argv[2][1] == 'd'){
+			// sort points lexicographically (break ties with y-coord)
+			std::sort(points.begin(), points.end(), lex_compare);
+
+			cout << "Sorted points lexicographically: \n";
+			for(int i =0; i < points.size(); i++){
+				cout << "(" << points[i]->getPt()[0] << ", " << points[i]->getPt()[1] << ")\n";
+			}
+
 			triangles = divideConquerDT(points);
 		}else if(argv[2][1] == 'a'){
-			triangles = altCutDT(points);
+			bool cutDir = 0;
+			triangles = altCutDT(points, cutDir);
 		}
 	}
 
